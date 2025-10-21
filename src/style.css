@@ -1,1 +1,13 @@
+@font-face {
+  font-family: "RasterForge";
+  src: url("/fonts/RasterForgeRegular-JpBgm.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap; /* 建议加上，改善字体加载体验 */
+}
+
 @import "tailwindcss";
+
+@theme {
+  --font-pixel: "RasterForge", var(--font-sans);
+}
