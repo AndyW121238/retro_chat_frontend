@@ -5,6 +5,7 @@ import IconsResolver from "unplugin-icons/resolver";
 import Icons from "unplugin-icons/vite";
 import Components from "unplugin-vue-components/vite";
 import VueRouter from "unplugin-vue-router/vite";
+import vueDevTools from "vite-plugin-vue-devtools";
 import path from "path";
 
 // https://vite.dev/config/
@@ -13,6 +14,7 @@ export default defineConfig({
     tailwindcss(),
     VueRouter({}),
     vue(),
+    vueDevTools(),
     Components({
       dts: true,
       resolvers: [IconsResolver()],
@@ -34,7 +36,7 @@ export default defineConfig({
       "/api": {
         target: "http://100.111.86.103:9999",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ""),
+        rewrite: (path) => path.replace(/^\/api/, "/retrochat"),
       },
     },
   },

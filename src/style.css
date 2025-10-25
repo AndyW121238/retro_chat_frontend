@@ -8,6 +8,23 @@
 
 @import "tailwindcss";
 
+@layer base {
+  :root {
+    --color-background-from: #12c2e9;
+    --color-background-via: #c471ed;
+    --color-background-to: #f64f59;
+  }
+
+  .dark {
+    --color-background-from: #0a0033;
+    --color-background-via: #2b0066;
+    --color-background-to: #00e0ff;
+  }
+}
+
 @theme {
   --font-pixel: "RasterForge", var(--font-sans);
+  --color-from: var(--color-background-from);
+  --color-via: var(--color-background-via);
+  --color-to: var(--color-background-to);
 }
