@@ -2,7 +2,7 @@
   <div
     class="h-screen w-screen transition-colors flex justify-center items-center bg-linear-to-br from-from from-10% via-via via-30% to-to to-90%"
   >
-    <div class="absolute top-10 right-10">
+    <div class="absolute top-10 right-10 dark:text-white transition-colors">
       <i-pixelarticons-moon @click="toggleDark" v-show="isDark" />
       <i-pixelarticons-sun-alt @click="toggleDark" v-show="!isDark" />
     </div>
@@ -12,7 +12,6 @@
           <div class="flex gap-x-3">
             <PixelButton
               :color="mode === 'login' ? 'bg-yellow-300' : 'bg-gray-300'"
-              className="w-full"
               @click="goLogin"
             >
               <div class="flex px-10 py-3 justify-center text-xl gap-x-3">
@@ -22,7 +21,6 @@
             </PixelButton>
             <PixelButton
               :color="mode === 'register' ? 'bg-yellow-300' : 'bg-gray-300'"
-              className="w-full"
               @click="goRegister"
             >
               <div class="flex px-10 py-3 justify-center text-xl gap-x-3">

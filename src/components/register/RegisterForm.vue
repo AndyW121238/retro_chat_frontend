@@ -1,64 +1,74 @@
 <template>
-  <form
-    class="mt-8 text-xl flex flex-col gap-y-4"
-    @submit.prevent="handleRegister"
-  >
-    <div>
-      <p class="flex gap-x-2">
+  <form class="mt-8 text-xl flex flex-col" @submit.prevent="handleRegister">
+    <FormItem label="USERNAME">
+      <template #icon>
         <i-pixelarticons-user />
-        <span>USERNAME</span>
-      </p>
+      </template>
       <PixelInput
+        autocomplete="off"
         v-model="registerForm.username"
         type="text"
         name="username"
         placeholder="Enter your username"
       />
-    </div>
-    <div>
-      <p class="flex gap-x-2">
+    </FormItem>
+
+    <FormItem label="EMAIL">
+      <template #icon>
         <i-pixelarticons-mail />
-        <span>EMAIL</span>
-      </p>
+      </template>
       <PixelInput
+        autocomplete="off"
         v-model="registerForm.email"
         type="text"
         name="email"
         placeholder="Enter your email"
       />
-    </div>
-    <div>
-      <p class="flex gap-x-2">
+    </FormItem>
+
+    <FormItem label="PASSWORD">
+      <template #icon>
         <i-pixelarticons-lock />
-        <span>PASSWORD</span>
-      </p>
+      </template>
       <PixelInput
+        autocomplete="off"
         v-model="registerForm.password"
         type="password"
         name="password"
         placeholder="Enter your password"
       />
-    </div>
-    <div>
-      <p class="flex gap-x-2">
+    </FormItem>
+
+    <FormItem label="CODE">
+      <template #icon>
         <i-pixelarticons-keyboard />
-        <span>CODE</span>
-      </p>
+      </template>
       <div class="flex items-center gap-x-1">
         <PixelInput
+          autocomplete="off"
           v-model="code"
           type="text"
           name="code"
           placeholder="Enter the code sent to you"
         />
-        <PixelButton color="bg-pink-500" type="button" @click="sendVerifyCode">
+        <PixelButton
+          class="dark:text-white"
+          color="bg-via"
+          type="button"
+          @click="sendVerifyCode"
+        >
           <p class="px-10 py-2 w-30">
             {{ countDown ? resendCountDown : "Send" }}
           </p>
         </PixelButton>
       </div>
-    </div>
-    <PixelButton color="bg-linear-45 from-from via-via to-to" type="submit">
+    </FormItem>
+
+    <PixelButton
+      color="bg-linear-45 from-from via-via to-to"
+      class="dark:text-white"
+      type="submit"
+    >
       <p class="px-10 py-3">Create account</p>
     </PixelButton>
   </form>

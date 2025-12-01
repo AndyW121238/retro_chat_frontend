@@ -9,8 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@stomp/stompjs": "^7.2.1",
     "@tailwindcss/vite": "^4.1.15",
     "axios": "^1.12.2",
+    "pinia": "^3.0.4",
+    "pinia-plugin-persistedstate": "^4.7.1",
     "tailwindcss": "^4.1.15",
     "vue": "^3.5.22",
     "vue-router": "^4.6.3"
@@ -18,6 +21,7 @@
   "devDependencies": {
     "@iconify-json/bxs": "^1.2.2",
     "@iconify-json/carbon": "^1.2.14",
+    "@iconify-json/eos-icons": "^1.2.4",
     "@iconify-json/material-symbols": "^1.2.42",
     "@iconify-json/pixel": "^1.2.1",
     "@iconify-json/pixelarticons": "^1.2.2",
