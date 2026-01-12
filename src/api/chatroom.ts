@@ -4,7 +4,7 @@ import request from "@/utils/request";
 interface UserListItemResponse {
   id: string;
   username: string;
-  userAvatar: string | null;
+  userAvatar: string;
   userProfile: string | null;
   topOver: number;
   email: string;
@@ -31,7 +31,7 @@ interface SendMessageResponse {
   isRead: number;
 }
 
-interface ChatHistoryResponse {
+interface ChatHistoryMessage {
   id: string;
   content: string;
   senderId: string;
@@ -47,6 +47,19 @@ interface ChatHistoryResponse {
   isRead: number;
 }
 
+interface PagedChatHistoryResponse {
+  records: Array<ChatHistoryMessage>;
+  pageNumber: string;
+  pageSize: string;
+  totalPage: string;
+  totalRow: string;
+}
+
+interface LaunchVideoCallResponse {
+  content: string;
+  signal: boolean;
+}
+
 // ==================== 请求 DTO ====================
 // 发送消息请求体
 export interface SendMessageRequest {
@@ -55,6 +68,10 @@ export interface SendMessageRequest {
   receiverId: string;
   timestamp: string;
   messageFormat: 1 | 2 | 3 | 4;
+}
+
+export interface LaunchVideoCallRequest {
+  toUserId: string;
 }
 
 // 获取私聊用户列表接口
@@ -71,10 +88,21 @@ export const sendDirectMessageApi = (sendMessageBody: SendMessageRequest) => {
 };
 
 // 获取聊天记录
-export const getChatHistoryApi = (roomId: string) => {
-  return request.get<Array<ChatHistoryResponse>>("/chat/history", {
-    params: {
-      roomId,
-    },
+export const getChatHistoryApi = (
+  roomId: string,
+  current: number,
+  pageSize: number
+) => {
+  return request.post<PagedChatHistoryResponse>("/chat/page-history", {
+    roomId,
+    current,
+    pageSize,
+  });
+};
+
+// 发起视频通话接口
+export const launchVideoCall = (toUserId: string) => {
+  return request.post<LaunchVideoCallResponse>("/video/call", {
+    toUserId,
   });
 };

@@ -56,6 +56,9 @@ export const useUserStore = defineStore("userStore", {
         userAvatar: String(payload.userAvatar) ?? null,
       };
     },
+    clearUserInfo() {
+      this.userInfo = null;
+    },
   },
   persist: true,
 });

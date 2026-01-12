@@ -1,10 +1,20 @@
 <template>
   <div class="h-full flex flex-col min-h-0">
     <header
-      class="h-8 bg-via flex items-center gap-x-1 text-md px-3 border-b-3"
+      class="h-fit bg-via flex flex-col items-center justify-between gap-x-1 text-md px-3 border-b-3"
     >
-      <i-pixelarticons-message />
-      <h2>DMs</h2>
+      <div class="w-full flex items-center justify-between py-1">
+        <div class="flex gap-x-1 items-center">
+          <i-pixelarticons-message />
+          <h2>DMs</h2>
+        </div>
+        <i-material-symbols:person-add-outline
+          class="cursor-pointer"
+          @click="handleAddFriend"
+        />
+      </div>
+
+      <PixelInput v-show="isSearchUser" v-model="searchUserName" />
     </header>
     <ul class="p-2 flex flex-col gap-y-2 flex-1 overflow-auto">
       <li
@@ -19,7 +29,10 @@
         >
           <div class="h-16 flex items-center gap-x-2 p-2">
             <div class="h-full aspect-square border-2">
-              <UserAvatar :username="user.username" />
+              <UserAvatar
+                :username="user.username"
+                :avatar="user.userAvatar!"
+              />
             </div>
             <div class="h-full flex flex-col grow justify-between">
               <p>{{ user.username }}</p>
@@ -44,10 +57,16 @@ const emits = defineEmits<{
   (e: "chooseUser", user: DirectMessageUser): void;
 }>();
 const chosenUserId = ref<string | null>(null);
+const searchUserName = ref<string>("");
+const isSearchUser = ref<boolean>(false);
 
 const handleChooseUser = (user: DirectMessageUser) => {
   emits("chooseUser", user);
   chosenUserId.value = user.id;
+};
+
+const handleAddFriend = () => {
+  isSearchUser.value = !isSearchUser.value;
 };
 </script>
 <style scoped></style>

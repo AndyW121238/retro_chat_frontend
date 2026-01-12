@@ -9,21 +9,23 @@
     <div>
       <PixelCard>
         <div class="p-8">
-          <div class="flex gap-x-3">
+          <div class="flex">
             <PixelButton
               :color="mode === 'login' ? 'bg-yellow-300' : 'bg-gray-300'"
+              class="w-6/12 mr-3"
               @click="goLogin"
             >
-              <div class="flex px-10 py-3 justify-center text-xl gap-x-3">
+              <div class="py-3 flex justify-center text-xl gap-x-3">
                 <i-pixelarticons-corner-down-right />
                 <span>Login</span>
               </div>
             </PixelButton>
             <PixelButton
               :color="mode === 'register' ? 'bg-yellow-300' : 'bg-gray-300'"
+              class="w-6/12"
               @click="goRegister"
             >
-              <div class="flex px-10 py-3 justify-center text-xl gap-x-3">
+              <div class="py-3 flex justify-center text-xl gap-x-3">
                 <i-pixel-user />
                 <span>Register</span>
               </div>

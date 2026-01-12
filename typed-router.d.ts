@@ -37,6 +37,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/video-chat': RouteRecordInfo<
+      '/video-chat',
+      '/video-chat',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
   }
 
   /**
@@ -59,6 +66,12 @@ declare module 'vue-router/auto-routes' {
     'src/pages/chatroom.vue': {
       routes:
         | '/chatroom'
+      views:
+        | never
+    }
+    'src/pages/video-chat.vue': {
+      routes:
+        | '/video-chat'
       views:
         | never
     }

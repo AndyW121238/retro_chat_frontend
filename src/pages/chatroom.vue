@@ -6,10 +6,8 @@
         <h1 class="font-bold text-xl">Retro Chat</h1>
         <div class="flex">
           <router-link to="/" class="block">
-            <PixelButton class="h-full" color="bg-via" :shadow="false">
-              <div class="h-full px-1 flex justify-center items-center">
-                <i-pixelarticons-logout />
-              </div>
+            <PixelButton color="bg-via" :shadow="false">
+              <p>退出</p>
             </PixelButton>
           </router-link>
         </div>
@@ -35,7 +33,7 @@
                     "
                     :shadow="false"
                   >
-                    CHANNELS
+                    <p>群聊</p>
                   </PixelButton>
                   <PixelButton
                     @click="changeMode('DM')"
@@ -45,7 +43,7 @@
                     "
                     :shadow="false"
                   >
-                    DMs
+                    <p>私聊</p>
                   </PixelButton>
                 </div>
               </PixelCard>
@@ -55,11 +53,16 @@
               <keep-alive>
                 <component
                   :is="leftSideComponent"
-                  :list="directMessageUserList"
+                  :list="directMessageUserList || []"
                   @choose-user="handleChooseUser"
                 ></component>
               </keep-alive>
             </PixelCard>
+            <div class="h-fit">
+              <PixelCard :shadow="false">
+                <UserInfoPannel />
+              </PixelCard>
+            </div>
           </div>
         </div>
 
@@ -67,10 +70,14 @@
         <div class="w-8/12 px-2 h-full">
           <PixelCard>
             <DirectMessageChatArea
-              ref="charArea"
+              ref="chatArea"
               v-if="chosenUser"
               :message-history="messageHistory"
+              :is-more="isMoreMessageHistory"
+              :is-loading="isLoadingMessageHistory"
+              :is-init="isInitFetchMessageHistory"
               @send-message="handleSendMessage"
+              @load-message-history="handleLoadMoreMessageHistory"
             />
             <div
               v-else
@@ -83,14 +90,13 @@
 
         <!-- right section -->
         <div class="w-2/12">
-          <PixelCard :shadow="false">右侧烂</PixelCard>
+          <PixelCard :shadow="false">右侧栏</PixelCard>
         </div>
       </div>
     </template>
   </ChatroomLayout>
 </template>
 <script lang="ts" setup>
-import type { Client as ClientType, StompSubscription } from "@stomp/stompjs";
 import type { DirectMessage, DirectMessageUser } from "@/types/chat";
 import type { SendMessageRequest } from "@/api/chatroom";
 import {
@@ -100,9 +106,10 @@ import {
   provide,
   onUnmounted,
   useTemplateRef,
+  nextTick,
 } from "vue";
 import { useUserStore } from "@/store/userStore";
-import { Client } from "@stomp/stompjs";
+import { useStompStore } from "@/store/stompStore";
 import {
   getChatHistoryApi,
   getDMsListApi,
@@ -113,14 +120,26 @@ import DirectMessageList from "@/components/chatroom/DirectMessageList.vue";
 
 type Mode = "channels" | "DM";
 
+defineOptions({
+  name: "Chatroom",
+});
 const userStore = useUserStore();
+const stompStore = useStompStore();
 const leftSideMode = ref<Mode>("DM");
 const directMessageUserList = ref<Array<DirectMessageUser>>([]);
 const chosenUser = ref<DirectMessageUser | null>(null);
 const messageHistory = ref<Array<DirectMessage>>([]);
-const client = ref<ClientType | null>(null);
-const DMSubscription = ref<StompSubscription | null>(null);
-const chatArea = useTemplateRef("charArea");
+const current = ref<number>(1);
+const pageSize = ref<number>(40);
+const isLoadingMessageHistory = ref<boolean>(false);
+const isMoreMessageHistory = ref<boolean>(false);
+const chatArea = useTemplateRef("chatArea");
+const isInitFetchMessageHistory = ref<boolean>(true);
+
+// 保存订阅回调引用，用于取消订阅
+let privateMessageCallback: ((message: any) => void) | null = null;
+let videoCallCallback: ((message: any) => void) | null = null;
+let videoCallResultCallback: ((message: any) => void) | null = null;
 
 const leftSideComponent = computed(() => {
   return leftSideMode.value === "channels" ? ChannelList : DirectMessageList;
@@ -146,8 +165,8 @@ const handleSendMessage = async (message: string) => {
     senderName: userStore.userInfo.username,
     status: "pending",
   };
-
   messageHistory.value.push(optimisticMessage);
+  chatArea.value!.scrollToBottom(true);
 
   const body: SendMessageRequest = {
     content: trimmedMessage,
@@ -158,15 +177,20 @@ const handleSendMessage = async (message: string) => {
   };
   try {
     const result = await sendDirectMessageApi(body);
-
     const targetMessaeg = messageHistory.value.find((m) => m.id === tempId)!;
     targetMessaeg.id = result.id;
     targetMessaeg.timestamp = result.timestamp;
     targetMessaeg.status = "sent";
+
+    const targetUser = directMessageUserList.value.find(
+      (user) => user.id === chosenUser.value!.id
+    );
+    if (targetUser) {
+      targetUser.lastMessageContent = targetMessaeg.content;
+    }
   } catch (err) {
     const targetMessaeg = messageHistory.value.find((m) => m.id === tempId)!;
     targetMessaeg.status = "failed";
-    console.log(err);
   }
 };
 
@@ -175,70 +199,126 @@ const changeMode = (newMode: Mode) => {
   leftSideMode.value = newMode;
 };
 
-const handleChooseUser = (user: DirectMessageUser) => {
+const handleChooseUser = async (user: DirectMessageUser) => {
   chosenUser.value = user;
-  fetchChatHistory();
+  messageHistory.value = [];
+  isInitFetchMessageHistory.value = true;
+  current.value = 1;
+  await fetchChatHistory();
+  isInitFetchMessageHistory.value = false;
 };
 
-// 获取当前聊天的聊天记录
+// 获取与选中好友的聊天记录
 const fetchChatHistory = async () => {
-  const result = await getChatHistoryApi(chosenUser.value?.roomId!);
-  messageHistory.value = result.map(
-    ({ id, content, timestamp, senderId, senderName }) => ({
-      id,
-      content,
-      timestamp,
-      senderId,
-      senderName,
-    })
-  );
+  if (isLoadingMessageHistory.value) return;
+  isLoadingMessageHistory.value = true;
+  try {
+    const result = await getChatHistoryApi(
+      chosenUser.value?.roomId!,
+      current.value,
+      pageSize.value
+    );
+    messageHistory.value.unshift(
+      ...result?.records.map(
+        ({ id, content, timestamp, senderId, senderName }) => ({
+          id,
+          content,
+          timestamp,
+          senderId,
+          senderName,
+        })
+      )
+    );
+    isMoreMessageHistory.value = !(
+      messageHistory.value.length >= +result.totalRow
+    );
+    if (isInitFetchMessageHistory.value) {
+      await chatArea.value?.scrollToBottom();
+    }
+  } finally {
+    isLoadingMessageHistory.value = false;
+  }
+};
+
+// 加载更多聊天记录
+const handleLoadMoreMessageHistory = async () => {
+  console.log("加载更多消息");
+  const el = chatArea.value?.getContainer();
+  const prevHeight = el?.scrollHeight ?? 0;
+  const prevTop = el?.scrollTop ?? 0;
+  current.value++;
+  await fetchChatHistory();
+  await nextTick();
+  if (el) {
+    const diff = el.scrollHeight - prevHeight;
+    el.scrollTop = prevTop + diff;
+  }
 };
 
 onMounted(async () => {
   const result = await getDMsListApi();
-
-  directMessageUserList.value = result.map(
+  directMessageUserList.value = result?.map(
     ({ id, username, email, userAvatar, lastMessageContent, roomId }) => ({
       id,
       username,
       email,
-      userAvatar,
+      userAvatar: userAvatar,
       lastMessageContent,
       roomId,
     })
   );
 
   // 与后端建立 stomp 连接
-  client.value = new Client({
-    brokerURL: `/ws/chat-ws?Authorization=${localStorage.getItem("token")}`,
-    connectHeaders: {
-      Authorization: localStorage.getItem("token")!,
-    },
-  });
-  client.value.onConnect = (frame) => {
-    console.log("Stomp连接成功", frame);
-    // 订阅私聊消息
-    DMSubscription.value = client.value?.subscribe(
-      "/user/queue/private",
-      (frame) => {
-        console.log("私聊消息订阅callback", JSON.parse(frame.body));
-        const receivedMessage = JSON.parse(frame.body) as DirectMessage;
-        if (receivedMessage.senderId === chosenUser.value?.id) {
-          messageHistory.value.push(receivedMessage);
-        } else {
-          // todo: 显示在左侧栏目中
-        }
-      }
-    )!;
-    console.log("订阅所有私聊消息成功");
+  try {
+    await stompStore.connect();
 
-    // todo：订阅群聊消息
-  };
-  client.value.activate();
+    // 定义回调函数，便于后续取消订阅时使用
+    privateMessageCallback = (receivedMessage: any) => {
+      console.log("私聊消息订阅callback", receivedMessage);
+      const message = receivedMessage as DirectMessage;
+      messageHistory.value.push(message);
+      const targetUser = directMessageUserList.value.find(
+        (user) => user.id === message.senderId
+      );
+      if (targetUser) {
+        targetUser.lastMessageContent = message.content;
+      }
+    };
+
+    videoCallCallback = (message: any) => {
+      console.log("视频通话消息订阅callback", message);
+      console.log(message);
+    };
+
+    videoCallResultCallback = (message: any) => {
+      console.log("视频通话结果订阅callback", message);
+    };
+
+    // 订阅私聊消息
+    await stompStore.subscribe("/user/queue/private", privateMessageCallback);
+
+    // 订阅视频通话消息
+    await stompStore.subscribe("/user/queue/video", videoCallCallback);
+
+    // 订阅视频通话结果
+    await stompStore.subscribe("/app/video/call", videoCallResultCallback);
+  } catch (error) {
+    console.error("Stomp连接失败", error);
+  }
 });
 
 onUnmounted(() => {
-  DMSubscription.value!.unsubscribe();
+  // 取消订阅（只移除当前页面的回调）
+  if (privateMessageCallback) {
+    stompStore.unsubscribe("/user/queue/private", privateMessageCallback);
+  }
+  if (videoCallCallback) {
+    stompStore.unsubscribe("/user/queue/video", videoCallCallback);
+  }
+  if (videoCallResultCallback) {
+    stompStore.unsubscribe("/app/video/call", videoCallResultCallback);
+  }
+  // 注意：这里不调用 disconnect()，因为我们希望连接保持活跃供其他页面使用
 });
 </script>
 <style scoped></style>

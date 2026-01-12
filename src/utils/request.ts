@@ -5,6 +5,8 @@ import axios, {
   type AxiosRequestConfig,
   type InternalAxiosRequestConfig,
 } from "axios";
+import router from "@/router/router";
+import { useUserStore } from "@/store/userStore";
 
 // 扩展 AxiosInstance 接口，重写方法的返回类型
 // 因为响应拦截器会提取 res.data，所以返回类型是 Promise<T> 而不是 Promise<AxiosResponse<T>>
@@ -49,6 +51,8 @@ const requestInstance: AxiosInstance = axios.create({
   timeout: 5000,
 });
 
+const userStore = useUserStore();
+
 // 请求拦截器
 requestInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -68,6 +72,10 @@ requestInstance.interceptors.response.use(
     const res = response.data as ApiResponse<any>;
     if (res.code === 0) {
       return res.data;
+    } else if (res.code === 40300) {
+      router.push("/");
+      userStore.clearUserInfo();
+      localStorage.removeItem("token");
     } else {
       throw new ApiError(res.code, res.message, res.data);
     }

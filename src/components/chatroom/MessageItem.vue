@@ -8,6 +8,9 @@
     <div class="w-10 h-10 border-2 shrink-0">
       <UserAvatar
         :username="isSelfMessage ? userStore.userInfo?.username! : user.username"
+        :avatar="
+          isSelfMessage ? userStore.userInfo!.userAvatar! : user.userAvatar
+        "
       />
     </div>
     <div

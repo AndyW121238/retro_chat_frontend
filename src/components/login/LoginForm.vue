@@ -30,8 +30,9 @@
       class="dark:text-whit"
       color="bg-linear-45 from-from via-via to-to"
       type="submit"
+      :loading="loginLoading"
     >
-      <p class="px-10 py-3">Enter chat room</p>
+      <p class="py-3">Enter chat room</p>
     </PixelButton>
   </form>
 </template>

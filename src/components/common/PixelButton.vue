@@ -12,8 +12,10 @@
         class="relative z-20 w-full h-full cursor-pointer"
         v-bind="buttonAtrtrs"
       >
-        <slot v-if="!loading"></slot>
-        <i-eos-icons:bubble-loading v-else />
+        <div class="px-10 h-full flex items-center justify-center gap-x-3">
+          <i-eos-icons:bubble-loading v-if="loading" />
+          <slot></slot>
+        </div>
       </button>
     </div>
   </div>

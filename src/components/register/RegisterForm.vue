@@ -57,7 +57,7 @@
           type="button"
           @click="sendVerifyCode"
         >
-          <p class="px-10 py-2 w-30">
+          <p class="py-2">
             {{ countDown ? resendCountDown : "Send" }}
           </p>
         </PixelButton>
@@ -69,7 +69,7 @@
       class="dark:text-white"
       type="submit"
     >
-      <p class="px-10 py-3">Create account</p>
+      <p class="py-3">Create account</p>
     </PixelButton>
   </form>
 </template>

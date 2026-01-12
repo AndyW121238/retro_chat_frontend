@@ -5,6 +5,6 @@ import router from "@/router/router";
 import pinia from "@/store/index";
 
 const app = createApp(App);
-app.use(router);
 app.use(pinia);
+app.use(router);
 app.mount("#app");
